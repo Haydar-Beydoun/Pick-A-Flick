@@ -168,8 +168,10 @@ function App() {
     return (
         <main>
             <div className="pattern "/>
+
+            <Navbar/>
+
             <div className="wrapper ">
-                <Navbar/>
                 <Hero/>
 
                 {topMovies.length > 0 && <TopMovies movies={topMovies}/>}

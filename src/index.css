@@ -74,7 +74,7 @@
     }
 
     .wrapper {
-        @apply px-5 py-12 xs:p-10 max-w-7xl mx-auto flex flex-col relative z-10;
+        @apply px-5 py-12 xs:p-10 max-w-[90rem] mx-auto flex flex-col relative z-10;
     }
 
     .topMovies {
@@ -182,11 +182,11 @@
     }
 
     .navbar {
-        @apply text-white flex justify-end;
+        @apply text-white flex justify-end relative z-10 px-5 py-12 xs:p-10 gap-5;
 
         & a {
             @apply bg-blue-950 px-4 py-2 rounded-3xl text-white text-sm sm:text-base md:text-lg cursor-pointer hover:bg-blue-900 duration-200
-            disabled:hover:bg-blue-950 flex items-center justify-center -mt-3;
+            flex items-center justify-center -mt-3;
         }
 
         & img {
