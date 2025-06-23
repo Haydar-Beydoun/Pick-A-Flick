@@ -6,6 +6,7 @@ import Hero from "./components/layout/Hero.jsx";
 import AllMovies from "./components/layout/AllMovies.jsx";
 import Pagination from "./components/layout/Pagination.jsx";
 import useMovieCache from "./hooks/useMovieCache.jsx";
+import Navbar from "./components/layout/Navbar.jsx";
 
 const API_BASE_URL = 'https://api.themoviedb.org/3';
 const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
@@ -168,6 +169,7 @@ function App() {
         <main>
             <div className="pattern "/>
             <div className="wrapper ">
+                <Navbar/>
                 <Hero/>
 
                 {topMovies.length > 0 && <TopMovies movies={topMovies}/>}
