@@ -14,7 +14,7 @@ function MovieList({movies, isLoading, errorMessage}) {
             ) : (
                 <ul className="fade-in">
                     {movies.map(movie => (
-                        <MovieCard key={movie.id} movie={movie}/>
+                        <MovieCard key={movie.id} movie={movie} id={movie.id}/>
                     ))}
                 </ul>
             )}

@@ -1,8 +1,14 @@
 import React from 'react';
+import {useNavigate} from 'react-router-dom';
 
-function MovieCard({movie: {title, vote_average, poster_path, release_date, original_language}}) {
+function MovieCard({movie: {title, vote_average, poster_path, release_date, original_language, id}}) {
+    const navigate = useNavigate();
+    const handleClick = () => {
+        navigate(`/movie/${id}`);
+    };
+
     return (
-        <div className="movie-card">
+        <div className="movie-card cursor-pointer" onClick={handleClick}>
             <img draggable="false"
                  src={poster_path ? `https://image.tmdb.org/t/p/w500/${poster_path}` : "/no-movie.png"} alt={title}/>
 
