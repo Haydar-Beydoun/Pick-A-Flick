@@ -1,7 +1,7 @@
 import Navbar from "./components/layout/Navbar.jsx";
 import MovieDetailsPage from "./pages/MovieDetailsPage.jsx";
 import HomePage from "./pages/HomePage.jsx";
-import {Route, Router, Routes} from "react-router-dom";
+import {Route, Routes} from "react-router-dom";
 
 function App() {
     return (

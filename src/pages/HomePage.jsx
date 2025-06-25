@@ -6,7 +6,7 @@ import Pagination from "../components/layout/Pagination.jsx";
 import useMovieCache from "../hooks/useMovieCache.jsx";
 import {useDebounce} from "react-use";
 import {getTopMovies, updateSearchCount} from "../utils/appwrite.js";
-import {API_BASE_URL, API_OPTIONS} from "../utils/config.js";
+import {fetchGenres, fetchMovies} from "../api/tmdb.js";
 
 function HomePage() {
     const [searchTerm, setSearchTerm] = useState('');
@@ -30,37 +30,31 @@ function HomePage() {
         clearCache
     } = useMovieCache();
 
+    const allMoviesRef = useRef(null);
 
     useDebounce(() => setDebouncedSearchTerm(searchTerm), 500, [searchTerm]);
     useDebounce(() => setDebouncedGenresFiltered(genresFiltered), 500, [genresFiltered]);
 
     useEffect(() => {
-        // Clearing cache when search or filter change to prevent stale data
         clearCache();
-
-        if (currentMoviePageNumber !== 1) {
-            setCurrentMoviePageNumber(1);
-        } else {
-            fetchMovies(debouncedSearchTerm, debouncedGenresFiltered, 1);
-        }
+        setCurrentMoviePageNumber(1);
+        loadMovies();
     }, [debouncedGenresFiltered, debouncedSearchTerm]);
+
     useEffect(() => {
-        fetchMovies(debouncedSearchTerm, genresFiltered, currentMoviePageNumber);
+        loadMovies();
     }, [currentMoviePageNumber]);
+
     useEffect(() => {
         loadTopMovies();
-        getAvailableGenres();
+        loadGenres();
     }, []);
 
-
-    const allMoviesRef = useRef(null);
-
-    const fetchMovies = async (query = '', genreIDs = [], page = 1) => {
-        const cacheKey = `${query}_${genreIDs.join(',')}_${page}`;
-
+    const loadMovies = async () => {
+        const cacheKey = `${debouncedSearchTerm}_${debouncedGenresFiltered.join(',')}_${currentMoviePageNumber}`;
         const cached = getCachedMovies(cacheKey);
+
         if (cached) {
-            console.log("Movie cache found");
             setMovieList(cached);
             return;
         }
@@ -69,74 +63,34 @@ function HomePage() {
         setErrorMessage(null);
 
         try {
-            const baseParams = [
-                'include_adult=false',
-                `page=${page}`
-            ];
-
-            const genreParams = genreIDs.length > 0 ? `&with_genres=${genreIDs.join(',')}` : '';
-            if (genreParams) baseParams.push(genreParams);
-
-            let endpoint;
-
-            if (query) {
-                baseParams.push(`query=${encodeURIComponent(query)}`);
-                endpoint = `${API_BASE_URL}/search/movie?${baseParams.join('&')}`;
-            } else {
-                baseParams.push('sort_by=popularity.desc');
-                baseParams.push('certification_country=US');
-                baseParams.push('certification.gte=G');
-                baseParams.push('certification.lte=R');
-
-                endpoint = `${API_BASE_URL}/discover/movie?${baseParams.join('&')}`;
-            }
-
-            const response = await fetch(endpoint, API_OPTIONS);
-            if (!response.ok) throw new Error('Could not fetch movies');
-
-            const data = await response.json();
-
-            if (data.Response === 'False') {
-                setErrorMessage(data.error || 'Failed to fetch movies');
-                setMovieList([]);
-                return;
-            }
-
-            const movies = data.results || [];
-            const totalPages = Math.min(data.total_pages, 25);
+            const {movies, totalPages} = await fetchMovies(
+                debouncedSearchTerm,
+                debouncedGenresFiltered,
+                currentMoviePageNumber
+            );
 
             setMovieList(movies);
             setTotalMoviePages(totalPages);
             setCachedMovies(cacheKey, movies);
 
-            if (query && movies.length > 0) {
-                await updateSearchCount(query, data.results[0]);
+            if (debouncedSearchTerm && movies.length > 0) {
+                await updateSearchCount(movies[0]);
             }
-
         } catch (err) {
-            console.log(err);
-            setErrorMessage('Error fetching movies. Please try again later.');
+            console.error(err);
+            setErrorMessage("Error fetching movies. Please try again later.");
         } finally {
             setIsLoading(false);
         }
-    }
-    const getAvailableGenres = async () => {
+    };
+    const loadGenres = async () => {
         try {
-            const endpoint = `${API_BASE_URL}/genre/movie/list`;
-            const response = await fetch(endpoint, API_OPTIONS);
-
-            if (!response.ok) {
-                throw new Error('Could not fetch genres');
-            }
-
-            const data = await response.json();
-
-            setAvailableGenres(data.genres || []);
-
+            const genres = await fetchGenres();
+            setAvailableGenres(genres);
         } catch (err) {
-            console.log(err);
+            console.error(err);
         }
-    }
+    };
     const loadTopMovies = async () => {
         try {
             const movies = await getTopMovies();
@@ -159,7 +113,7 @@ function HomePage() {
         <>
             <Hero/>
 
-            {topMovies.length > 0 && <TopMovies movies={topMovies}/>}
+            {topMovies?.length > 0 && <TopMovies movies={topMovies}/>}
 
             <AllMovies
                 searchTerm={searchTerm}

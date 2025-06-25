@@ -7,7 +7,7 @@ function Pagination({currentTrendingPage, totalMoviePages, setCurrentMoviePageNu
     }
 
     return (
-        <section className="pagination flex justify-center gap-4 mt-6 ">
+        <section className="pagination">
             <button
                 onClick={() => updateMoviePage(currentTrendingPage - 1)}
                 disabled={currentTrendingPage === 1}

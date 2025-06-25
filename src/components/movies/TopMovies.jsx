@@ -1,8 +1,10 @@
-import React from 'react';
-
 function TopMovies({movies}) {
+    if (!movies || movies.length === 0) {
+        return <p className="text-red-400 mt-20">Couldn't load top movies</p>;
+    }
+
     return (
-        <section className="topMovies">
+        <section className="top-movies">
             <h2>Top Movies</h2>
             <ul>
                 {movies.map((movie, index) => (

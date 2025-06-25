@@ -1,4 +1,3 @@
-import React, {useEffect, useRef} from 'react';
 import Search from "./Search.jsx";
 import Accordion from "../ui/Accordion.jsx";
 import GenreList from "../genres/GenreList.jsx";

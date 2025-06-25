@@ -7,7 +7,6 @@ function GenreList({availableGenres, toggleGenreSelection, genresFiltered, searc
             {searchTerm && <p className="p-3 text-red-200">Cannot filter genres while searching</p>}
 
             <div className="flex flex-wrap">
-
                 {availableGenres && availableGenres.map((genre) => (
                     <GenreButton
                         toggleGenreSelection={toggleGenreSelection}
