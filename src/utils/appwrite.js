@@ -1,4 +1,4 @@
-import {Client, Databases, Query, ID} from 'appwrite'
+import {Client, Databases, Query} from 'appwrite'
 
 const PROJECT_ID = import.meta.env.VITE_APPWRITE_PROJECT_ID;
 const DATABASE_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID;
@@ -24,7 +24,7 @@ export const updateSearchCount = async (movie) => {
             await database.createDocument(DATABASE_ID, COLLECTION_ID, movie.id.toString(), {
                 count: 1,
                 movie_id: movie.id,
-                poster_url: `https://image.tmdb.org/t/p/w500${movie.poster_path}`,
+                poster_url: movie?.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : null,
 
             })
         }

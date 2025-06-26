@@ -9,8 +9,15 @@ import {getTopMovies, updateSearchCount} from "../utils/appwrite.js";
 import {fetchGenres, fetchMovies} from "../api/tmdb.js";
 
 function HomePage() {
-    const [searchTerm, setSearchTerm] = useState('');
-    const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+    const [filters, setFilters] = useState({
+        search: '',
+        genres: []
+    });
+    const [debouncedFilters, setDebouncedFilters] = useState(filters);
+    useDebounce(() => {
+        setDebouncedFilters(filters)
+    }, 500, [filters]);
+
 
     const [topMovies, setTopMovies] = useState([]);
     const [movieList, setMovieList] = useState([]);
@@ -18,8 +25,6 @@ function HomePage() {
     const [errorMessage, setErrorMessage] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
 
-    const [genresFiltered, setGenresFiltered] = useState([]);
-    const [debouncedGenresFiltered, setDebouncedGenresFiltered] = useState([]);
     const [availableGenres, setAvailableGenres] = useState([])
 
     const [currentMoviePageNumber, setCurrentMoviePageNumber] = useState(1);
@@ -31,27 +36,27 @@ function HomePage() {
     } = useMovieCache();
 
     const allMoviesRef = useRef(null);
-
-    useDebounce(() => setDebouncedSearchTerm(searchTerm), 500, [searchTerm]);
-    useDebounce(() => setDebouncedGenresFiltered(genresFiltered), 500, [genresFiltered]);
-
-    useEffect(() => {
-        clearCache();
-        setCurrentMoviePageNumber(1);
-        loadMovies();
-    }, [debouncedGenresFiltered, debouncedSearchTerm]);
-
-    useEffect(() => {
-        loadMovies();
-    }, [currentMoviePageNumber]);
+    const hasLoadedOnMount = useRef(false);
 
     useEffect(() => {
         loadTopMovies();
         loadGenres();
     }, []);
 
-    const loadMovies = async () => {
-        const cacheKey = `${debouncedSearchTerm}_${debouncedGenresFiltered.join(',')}_${currentMoviePageNumber}`;
+    useEffect(() => {
+        clearCache();
+        setCurrentMoviePageNumber(1);
+        loadMovies(debouncedFilters.search, debouncedFilters.genres, 1);
+        hasLoadedOnMount.current = true;
+    }, [debouncedFilters]);
+
+    useEffect(() => {
+        if (!hasLoadedOnMount.current) return;
+        loadMovies(debouncedFilters.search, debouncedFilters.genres, currentMoviePageNumber);
+    }, [currentMoviePageNumber]);
+
+    const loadMovies = async (search, genres, page) => {
+        const cacheKey = `${search}_${genres.join(',')}_${page}`;
         const cached = getCachedMovies(cacheKey);
 
         if (cached) {
@@ -63,17 +68,13 @@ function HomePage() {
         setErrorMessage(null);
 
         try {
-            const {movies, totalPages} = await fetchMovies(
-                debouncedSearchTerm,
-                debouncedGenresFiltered,
-                currentMoviePageNumber
-            );
+            const {movies, totalPages} = await fetchMovies(search, genres, page);
 
             setMovieList(movies);
             setTotalMoviePages(totalPages);
             setCachedMovies(cacheKey, movies);
 
-            if (debouncedSearchTerm && movies.length > 0) {
+            if (search && movies.length > 0 && page === 1) {
                 await updateSearchCount(movies[0]);
             }
         } catch (err) {
@@ -102,12 +103,17 @@ function HomePage() {
         }
     }
     const toggleGenreSelection = (genre) => {
-        setGenresFiltered(prevGenres =>
-            prevGenres.includes(genre)
-                ? prevGenres.filter(g => g !== genre)
-                : [...prevGenres, genre]
-        );
-    }
+        setFilters(prev => {
+            const genres = prev.genres.includes(genre)
+                ? prev.genres.filter(g => g !== genre)
+                : [...prev.genres, genre];
+
+            return {...prev, genres};
+        });
+    };
+    const setSearchTerm = (search) => {
+        setFilters((prev) => ({...prev, search}));
+    };
 
     return (
         <>
@@ -116,10 +122,10 @@ function HomePage() {
             {topMovies?.length > 0 && <TopMovies movies={topMovies}/>}
 
             <AllMovies
-                searchTerm={searchTerm}
+                searchTerm={filters.search}
                 setSearchTerm={setSearchTerm}
                 availableGenres={availableGenres}
-                genresFiltered={genresFiltered}
+                genresFiltered={filters.genres}
                 toggleGenreSelection={toggleGenreSelection}
                 movieList={movieList}
                 isLoading={isLoading}

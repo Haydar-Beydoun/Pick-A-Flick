@@ -11,7 +11,7 @@ function TopMovies({movies}) {
                     <li key={movie.$id}>
                         <p>{index + 1}</p>
                         <img draggable='false'
-                             src={!movie.poster_url.endsWith('null') ? movie.poster_url : '/no-movie.png'}
+                             src={movie.poster_url || '/no-movie.png'}
                              alt="movie poster"/>
                     </li>
                 ))}
