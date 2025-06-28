@@ -7,17 +7,24 @@ import useMovieCache from "../hooks/useMovieCache.jsx";
 import {useDebounce} from "react-use";
 import {getTopMovies, updateSearchCount} from "../utils/appwrite.js";
 import {fetchGenres, fetchMovies} from "../api/tmdb.js";
+import {useSearchParams} from "react-router-dom";
+import {MAX_TOTAL_PAGES} from "../utils/config.js";
 
 function HomePage() {
-    const [filters, setFilters] = useState({
-        search: '',
-        genres: []
-    });
+    const [searchParams, setSearchParams] = useSearchParams();
+
+    const initialSearch = searchParams.get("search") || '';
+    const initialGenres = searchParams.get("genres")
+        ? searchParams.get("genres").split(',').map(Number).filter(n => !isNaN(n))
+        : [];
+    const page = parseInt(searchParams.get("page"));
+    const initialPage = (page >= 1 && page <= MAX_TOTAL_PAGES) ? page : 1;
+
+    const [filters, setFilters] = useState({search: initialSearch, genres: initialGenres});
     const [debouncedFilters, setDebouncedFilters] = useState(filters);
     useDebounce(() => {
-        setDebouncedFilters(filters)
+        setDebouncedFilters(filters);
     }, 500, [filters]);
-
 
     const [topMovies, setTopMovies] = useState([]);
     const [movieList, setMovieList] = useState([]);
@@ -27,8 +34,9 @@ function HomePage() {
 
     const [availableGenres, setAvailableGenres] = useState([])
 
-    const [currentMoviePageNumber, setCurrentMoviePageNumber] = useState(1);
+    const [currentMoviePageNumber, setCurrentMoviePageNumber] = useState(initialPage);
     const [totalMoviePages, setTotalMoviePages] = useState(1);
+
     const {
         getCachedMovies,
         setCachedMovies,
@@ -36,24 +44,30 @@ function HomePage() {
     } = useMovieCache();
 
     const allMoviesRef = useRef(null);
-    const hasLoadedOnMount = useRef(false);
+    const firstMount = useRef(true);
 
     useEffect(() => {
         loadTopMovies();
         loadGenres();
     }, []);
-
     useEffect(() => {
-        clearCache();
-        setCurrentMoviePageNumber(1);
-        loadMovies(debouncedFilters.search, debouncedFilters.genres, 1);
-        hasLoadedOnMount.current = true;
-    }, [debouncedFilters]);
+        const params = {};
+        if (debouncedFilters.search.trim()) params.search = debouncedFilters.search;
+        if (debouncedFilters.genres.length > 0) params.genres = debouncedFilters.genres.join(',');
+        if (currentMoviePageNumber !== 1) params.page = currentMoviePageNumber.toString();
 
-    useEffect(() => {
-        if (!hasLoadedOnMount.current) return;
+        setSearchParams(params);
         loadMovies(debouncedFilters.search, debouncedFilters.genres, currentMoviePageNumber);
+    }, [debouncedFilters, currentMoviePageNumber]);
+    useEffect(() => {
+        if (firstMount.current) {
+            firstMount.current = false;
+            return;
+        }
+        if (!isLoading)
+            allMoviesRef.current?.scrollIntoView({behavior: 'smooth'});
     }, [currentMoviePageNumber]);
+
 
     const loadMovies = async (search, genres, page) => {
         const cacheKey = `${search}_${genres.join(',')}_${page}`;
@@ -110,9 +124,13 @@ function HomePage() {
 
             return {...prev, genres};
         });
+        setCurrentMoviePageNumber(1);
+        clearCache();
     };
     const setSearchTerm = (search) => {
         setFilters((prev) => ({...prev, search}));
+        setCurrentMoviePageNumber(1);
+        clearCache();
     };
 
     return (
@@ -133,8 +151,8 @@ function HomePage() {
                 allMoviesRef={allMoviesRef}
             />
 
-            <Pagination totalMoviePages={totalMoviePages} currentTrendingPage={currentMoviePageNumber}
-                        setCurrentMoviePageNumber={setCurrentMoviePageNumber} allMoviesRef={allMoviesRef}/>
+            <Pagination totalMoviePages={totalMoviePages} currentMoviePageNumber={currentMoviePageNumber}
+                        setCurrentMoviePageNumber={setCurrentMoviePageNumber}/>
         </>
     );
 }

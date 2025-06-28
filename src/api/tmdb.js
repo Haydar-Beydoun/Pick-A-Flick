@@ -1,4 +1,4 @@
-import {API_BASE_URL, API_OPTIONS} from "../utils/config.js";
+import {API_BASE_URL, API_OPTIONS, MAX_TOTAL_PAGES} from "../utils/config.js";
 
 export const fetchMovies = async (query = '', genreIDs = [], page = 1) => {
     const baseParams = [
@@ -32,7 +32,7 @@ export const fetchMovies = async (query = '', genreIDs = [], page = 1) => {
 
     return {
         movies: data.results || [],
-        totalPages: Math.min(data.total_pages || 1, 25),
+        totalPages: Math.min(data.total_pages || 1, MAX_TOTAL_PAGES),
     };
 }
 

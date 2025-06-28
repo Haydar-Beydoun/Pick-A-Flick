@@ -1,21 +1,20 @@
-function Pagination({currentTrendingPage, totalMoviePages, setCurrentMoviePageNumber, allMoviesRef}) {
+function Pagination({currentMoviePageNumber, totalMoviePages, setCurrentMoviePageNumber}) {
     const updateMoviePage = (page) => {
         if (page < 1 || page > totalMoviePages) return;
 
         setCurrentMoviePageNumber(page);
-        allMoviesRef.current?.scrollIntoView({behavior: 'smooth'});
     }
 
     return (
         <section className="pagination">
             <button
-                onClick={() => updateMoviePage(currentTrendingPage - 1)}
-                disabled={currentTrendingPage === 1}
+                onClick={() => updateMoviePage(currentMoviePageNumber - 1)}
+                disabled={currentMoviePageNumber === 1}
             >&lt;</button>
-            <span>{currentTrendingPage} / {totalMoviePages}</span>
+            <span>{currentMoviePageNumber} / {totalMoviePages}</span>
             <button
-                onClick={() => updateMoviePage(currentTrendingPage + 1)}
-                disabled={currentTrendingPage >= totalMoviePages}
+                onClick={() => updateMoviePage(currentMoviePageNumber + 1)}
+                disabled={currentMoviePageNumber >= totalMoviePages}
             >&gt;</button>
         </section>
     );

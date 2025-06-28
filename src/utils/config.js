@@ -7,5 +7,6 @@ const API_OPTIONS = {
         Authorization: `Bearer ${API_KEY}`,
     }
 }
+const MAX_TOTAL_PAGES = 25;
 
-export {API_BASE_URL, API_KEY, API_OPTIONS};
+export {API_BASE_URL, API_KEY, API_OPTIONS, MAX_TOTAL_PAGES};
